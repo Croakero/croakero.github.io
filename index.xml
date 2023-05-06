@@ -3,7 +3,20 @@
         <title>croakero</title>
         <link>http://croakero.github.io/</link>
         <description>Croakero&#39;s Blog</description>
-        <generator>Hugo -- gohugo.io</generator><language>zh-cn</language>
+        <generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Wed, 26 Apr 2023 20:02:32 &#43;0800</lastBuildDate>
             <atom:link href="http://croakero.github.io/index.xml" rel="self" type="application/rss+xml" />
-        </channel>
+        <item>
+    <title>开博纪念</title>
+    <link>http://croakero.github.io/posts/%E5%BC%80%E5%8D%9A%E7%BA%AA%E5%BF%B5/</link>
+    <pubDate>Wed, 26 Apr 2023 20:02:32 &#43;0800</pubDate>
+    <author>croakero</author>
+    <guid>http://croakero.github.io/posts/%E5%BC%80%E5%8D%9A%E7%BA%AA%E5%BF%B5/</guid>
+    <description><![CDATA[<h3 id="写在最前面">写在最前面</h3>
+<p>在很早之前就有过建立博客的念头，但是看到了各种各样的未经许可的转载、洗稿等等这样那样的荒诞之事，常常把富有激情的创作者搞得焦头烂额。我用词往往词不达意，句子组织也形散神散，这样的文章，我想大概是不会被那群慧眼识珠的爱书人使用的。</p>
+<p>这些年来，我的表达和写作欲望一直在降低，那么趁着我还没到一句话都不想说的时候，留下一些记忆吧。</p>
+<h3 id="准则">准则</h3>
+<p>不谈国是，不评时政，不写新闻</p>
+]]></description>
+</item>
+</channel>
 </rss>
