@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="zh-cn">
     <head>
-	<meta name="generator" content="Hugo 0.111.3">
+	<meta name="generator" content="Hugo 0.128.2">
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noodp" />
-        <title>croakero</title><meta name="Description" content="Croakero&#39;s Blog"><meta property="og:title" content="croakero" />
-<meta property="og:description" content="Croakero&#39;s Blog" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="http://croakero.github.io/" /><meta property="og:site_name" content="有蛙鸣的池塘" />
-<meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="croakero"/>
-<meta name="twitter:description" content="Croakero&#39;s Blog"/>
+        <title>croakero</title><meta name="Description" content="Croakero&#39;s Blog"><meta property="og:url" content="http://croakero.github.io/">
+  <meta property="og:site_name" content="croakero">
+  <meta property="og:title" content="croakero">
+  <meta property="og:description" content="Croakero&#39;s Blog">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="croakero">
+  <meta name="twitter:description" content="Croakero&#39;s Blog">
 <meta name="application-name" content="My cool site">
 <meta name="apple-mobile-web-app-title" content="My cool site"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -35,6 +38,9 @@
         <div class="menu">
             <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
                     <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a><a href="javascript:void(0);" class="menu-item language" title="选择语言">
+                    <i class="fa fa-globe" aria-hidden="true"></i>                      
+                    <select class="language-select" id="language-select-desktop" onchange="location = this.value;"><option value="/en/">English</option><option value="/" selected></option></select>
                 </a></div>
         </div>
     </div>
@@ -50,7 +56,10 @@
         </div>
         <div class="menu" id="menu-mobile"><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
                 <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
-            </a></div>
+            </a><a href="javascript:void(0);" class="menu-item" title="选择语言">
+                    <i class="fa fa-globe fa-fw" aria-hidden="true"></i>
+                    <select class="language-select" onchange="location = this.value;"><option value="/en/">English</option><option value="/" selected></option></select>
+                </a></div>
     </div>
 </header><main class="main">
                 <div class="container"><div class="page home" data-home="posts"><div class="home-profile"><div class="home-avatar"><a href="/posts/" title="文章"><img
@@ -62,6 +71,15 @@
         alt="/img/avatar.webp"
         title="/img/avatar.webp" width="600" height="600" /></a></div><h1 class="home-title">Croakero</h1><div class="home-subtitle">说话时，他的翅膀不时张开，像要飞动，却又垂下了——</div><div class="links"><a href="https://github.com/Croakero" title="GitHub" target="_blank" rel="noopener noreffer me"><i class="fab fa-github fa-fw" aria-hidden="true"></i></a><a href="https://t.me/luzhishen200" title="Telegram" target="_blank" rel="noopener noreffer me"><i class="fab fa-telegram-plane fa-fw" aria-hidden="true"></i></a></div></div>
 <article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/">使用LLaMA Factory训练模型指北（一、环境安装)</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="https://github.com/Croakero" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>croakero</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2024-07-16">2024-07-16</time></span></div><div class="content">本文适合于没有机器学习前置知识，但具有一定微积分和线性代数理解的读者，如果没有相应知识，文章中会给出稍许补充。
+1.准备工作 支持 CUDA 的 GPU ，如果没有，可以自行联系远程服务器 Linux bash 环境，如果没有，可以使用虚拟机构建 能够连接到 https://huggingface.co/ 的网络，用于下载模型,如果没有，需要用其他方法下载。能够连接到 https://github.com 的网络，用于下载 github 仓库，如果没有，找个会的人教你，要么就去网上搜 一些基础的 linux 操作方法，文章中会提及部分 本文基于 Ubuntu22.04LTS 2.使用 Anaconda 管理包 2.1 安装 Anaconda Anaconda 环境相较于传统的 pip 包管理来说，可以方便快捷地切换不同环境，如果把 pip 比作把所有的文件都摊到桌面上的笨手笨脚管理员， Anaconda 就像把文件归类放进不同文件夹里的爱干净管理员，这样的文件夹在 Anaconda 中称为“环境”。运行不同的程序所需的依赖不同，有时候会出现冲突，同时需要某个包的不同版本，就可以通过设置不同环境，基于某个环境运行不同程序。
+安装 Anaconda 依赖代码如下：
+apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6 安装 Anaconda 安装器
+# 先运行这行 curl -O https://repo.anaconda.com/archive/Anaconda3-2023.09-0-Linux-x86_64.sh # 接着是这行 bash ~/Downloads/Anaconda3-2023.09-0-Linux-x86_64.sh 你也可以在这里看菜鸟教程给出的不同平台详细的安装方法，也可以去这里看官网给出的安装方法。
+2.2 创建 Anaconda 环境,安装 CUDA 和 PyTorch 用 Anaconda 新建一个名为 LLaMA 的环境，使用 python3.</div><div class="post-footer">
+        <a href="/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/">阅读全文</a></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
         <a href="/posts/%E5%BC%80%E5%8D%9A%E7%BA%AA%E5%BF%B5/">开博纪念</a>
     </h1><div class="post-meta"><span class="post-author"><a href="https://github.com/Croakero" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>croakero</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2023-04-26">2023-04-26</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%9D%A2%E5%8C%85%E5%B1%91/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>面包屑</a></span></div><div class="content">写在最前面 在很早之前就有过建立博客的念头，但是看到了各种各样的未经许可的转载、洗稿等等这样那样的荒诞之事，常常把富有激情的创作者搞得焦头烂额。我用词往往词不达意，句子组织也形散神散，这样的文章，我想大概是不会被那群慧眼识珠的爱书人使用的。
 这些年来，我的表达和写作欲望一直在降低，那么趁着我还没到一句话都不想说的时候，留下一些记忆吧。
@@ -70,7 +88,7 @@
                 <i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/%E8%83%A1%E6%80%9D%E4%B9%B1%E6%83%B3/">胡思乱想</a></div></div>
 </article></div></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank"></a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        <div class="footer-container"><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2023 - 2024</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank"></a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>
 
@@ -79,5 +97,5 @@
             </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
                 <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
             </a>
-        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.5.1/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":50}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.5.1/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":100}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
 </html>

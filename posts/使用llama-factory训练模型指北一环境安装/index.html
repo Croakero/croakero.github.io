@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>使用LLaMA Factory训练模型指北（一、环境安装) - croakero</title><meta name="Description" content="Croakero&#39;s Blog"><meta property="og:url" content="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/">
+  <meta property="og:site_name" content="croakero">
+  <meta property="og:title" content="使用LLaMA Factory训练模型指北（一、环境安装)">
+  <meta property="og:description" content="本文适合于没有机器学习前置知识，但具有一定微积分和线性代数理解的读者，如果没有相应知识，文章中会给出稍许补充。
+1.准备工作 支持 CUDA 的 GPU ，如果没有，可以自行联系远程服务器 Linux bash 环境，如果没有，可以使用虚拟机构建 能够连接到 https://huggingface.co/ 的网络，用于下载模型,如果没有，需要用其他方法下载。能够连接到 https://github.com 的网络，用于下载 github 仓库，如果没有，找个会的人教你，要么就去网上搜 一些基础的 linux 操作方法，文章中会提及部分 本文基于 Ubuntu22.04LTS 2.使用 Anaconda 管理包 2.1 安装 Anaconda Anaconda 环境相较于传统的 pip 包管理来说，可以方便快捷地切换不同环境，如果把 pip 比作把所有的文件都摊到桌面上的笨手笨脚管理员， Anaconda 就像把文件归类放进不同文件夹里的爱干净管理员，这样的文件夹在 Anaconda 中称为“环境”。运行不同的程序所需的依赖不同，有时候会出现冲突，同时需要某个包的不同版本，就可以通过设置不同环境，基于某个环境运行不同程序。
+安装 Anaconda 依赖代码如下：
+apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6 安装 Anaconda 安装器
+# 先运行这行 curl -O https://repo.anaconda.com/archive/Anaconda3-2023.09-0-Linux-x86_64.sh # 接着是这行 bash ~/Downloads/Anaconda3-2023.09-0-Linux-x86_64.sh 你也可以在这里看菜鸟教程给出的不同平台详细的安装方法，也可以去这里看官网给出的安装方法。
+2.2 创建 Anaconda 环境,安装 CUDA 和 PyTorch 用 Anaconda 新建一个名为 LLaMA 的环境，使用 python3.">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2024-07-16T09:15:11+08:00">
+    <meta property="article:modified_time" content="2024-07-16T09:15:11+08:00">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="使用LLaMA Factory训练模型指北（一、环境安装)">
+  <meta name="twitter:description" content="本文适合于没有机器学习前置知识，但具有一定微积分和线性代数理解的读者，如果没有相应知识，文章中会给出稍许补充。
+1.准备工作 支持 CUDA 的 GPU ，如果没有，可以自行联系远程服务器 Linux bash 环境，如果没有，可以使用虚拟机构建 能够连接到 https://huggingface.co/ 的网络，用于下载模型,如果没有，需要用其他方法下载。能够连接到 https://github.com 的网络，用于下载 github 仓库，如果没有，找个会的人教你，要么就去网上搜 一些基础的 linux 操作方法，文章中会提及部分 本文基于 Ubuntu22.04LTS 2.使用 Anaconda 管理包 2.1 安装 Anaconda Anaconda 环境相较于传统的 pip 包管理来说，可以方便快捷地切换不同环境，如果把 pip 比作把所有的文件都摊到桌面上的笨手笨脚管理员， Anaconda 就像把文件归类放进不同文件夹里的爱干净管理员，这样的文件夹在 Anaconda 中称为“环境”。运行不同的程序所需的依赖不同，有时候会出现冲突，同时需要某个包的不同版本，就可以通过设置不同环境，基于某个环境运行不同程序。
+安装 Anaconda 依赖代码如下：
+apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6 安装 Anaconda 安装器
+# 先运行这行 curl -O https://repo.anaconda.com/archive/Anaconda3-2023.09-0-Linux-x86_64.sh # 接着是这行 bash ~/Downloads/Anaconda3-2023.09-0-Linux-x86_64.sh 你也可以在这里看菜鸟教程给出的不同平台详细的安装方法，也可以去这里看官网给出的安装方法。
+2.2 创建 Anaconda 环境,安装 CUDA 和 PyTorch 用 Anaconda 新建一个名为 LLaMA 的环境，使用 python3.">
+<meta name="application-name" content="My cool site">
+<meta name="apple-mobile-web-app-title" content="My cool site"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/" /><link rel="prev" href="http://croakero.github.io/posts/%E5%BC%80%E5%8D%9A%E7%BA%AA%E5%BF%B5/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css"></noscript><link rel="preload" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "使用LLaMA Factory训练模型指北（一、环境安装)",
+        "inLanguage": "zh-cn",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/croakero.github.io\/posts\/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85\/"
+        },"genre": "posts","wordcount":  285 ,
+        "url": "http:\/\/croakero.github.io\/posts\/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85\/","datePublished": "2024-07-16T09:15:11+08:00","dateModified": "2024-07-16T09:15:11+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "croakero"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="croakero">CRCR</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a><a href="javascript:void(0);" class="menu-item language" title="选择语言">
+                    <i class="fa fa-globe" aria-hidden="true"></i>                      
+                    <select class="language-select" id="language-select-desktop" onchange="location = this.value;"><option value="/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/" selected></option></select>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="croakero">CRCR</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a><a href="javascript:void(0);" class="menu-item" title="选择语言">
+                    <i class="fa fa-globe fa-fw" aria-hidden="true"></i>
+                    <select class="language-select" onchange="location = this.value;"><option value="/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/" selected></option></select>
+                </a></div>
+    </div>
+</header><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">使用LLaMA Factory训练模型指北（一、环境安装)</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://github.com/Croakero" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>croakero</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2024-07-16">2024-07-16</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;约 285 字&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;预计阅读 2 分钟&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="true">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#1准备工作">1.准备工作</a></li>
+    <li><a href="#2使用-anaconda-管理包">2.使用 Anaconda 管理包</a>
+      <ul>
+        <li><a href="#21-安装-anaconda">2.1 安装 Anaconda</a></li>
+        <li><a href="#22-创建-anaconda-环境安装-cuda-和-pytorch">2.2 创建 Anaconda 环境,安装 CUDA 和 PyTorch</a></li>
+      </ul>
+    </li>
+    <li><a href="#3安装-llama-factory">3.安装 LLaMA-Factory</a>
+      <ul>
+        <li><a href="#31-下载llama-facroty仓库">3.1 下载LLaMA-Facroty仓库</a></li>
+        <li><a href="#32-通过远程机器访问-webui">3.2 通过远程机器访问 webui</a></li>
+        <li><a href="#33-通过-tmux-这一终端复用器解决-ssh-连接的问题">3.3 通过 tmux 这一终端复用器解决 ssh 连接的问题</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>本文适合于没有机器学习前置知识，但具有一定微积分和线性代数理解的读者，如果没有相应知识，文章中会给出稍许补充。</p>
+<h2 id="1准备工作">1.准备工作</h2>
+<ul>
+<li>支持 CUDA 的 GPU ，如果没有，可以自行联系远程服务器</li>
+<li>Linux bash 环境，如果没有，可以使用虚拟机构建</li>
+<li>能够连接到 <a href="https://huggingface.co/" target="_blank" rel="noopener noreffer ">https://huggingface.co/</a> 的网络，用于下载模型,如果没有，需要用其他方法下载。能够连接到 <a href="https://github.com" target="_blank" rel="noopener noreffer ">https://github.com</a> 的网络，用于下载 github 仓库，如果没有，找个会的人教你，要么就去网上搜</li>
+<li>一些基础的 linux 操作方法，文章中会提及部分</li>
+<li>本文基于 Ubuntu22.04LTS</li>
+</ul>
+<h2 id="2使用-anaconda-管理包">2.使用 Anaconda 管理包</h2>
+<h3 id="21-安装-anaconda">2.1 安装 Anaconda</h3>
+<p>Anaconda 环境相较于传统的 pip 包管理来说，可以方便快捷地切换不同环境，如果把 pip 比作把所有的文件都摊到桌面上的笨手笨脚管理员， Anaconda 就像把文件归类放进不同文件夹里的爱干净管理员，这样的文件夹在 Anaconda 中称为“环境”。运行不同的程序所需的依赖不同，有时候会出现冲突，同时需要某个包的不同版本，就可以通过设置不同环境，基于某个环境运行不同程序。</p>
+<p>安装 Anaconda 依赖代码如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6
+</span></span></code></pre></div><p>安装 Anaconda 安装器</p>
+<pre tabindex="0"><code># 先运行这行
+curl -O https://repo.anaconda.com/archive/Anaconda3-2023.09-0-Linux-x86_64.sh
+# 接着是这行
+bash ~/Downloads/Anaconda3-2023.09-0-Linux-x86_64.sh
+</code></pre><p>你也可以在<a href="https://www.runoob.com/python-qt/anaconda-tutorial.html" target="_blank" rel="noopener noreffer ">这里</a>看菜鸟教程给出的不同平台详细的安装方法，也可以去<a href="https://docs.anaconda.com/anaconda/install/linux/" target="_blank" rel="noopener noreffer ">这里</a>看官网给出的安装方法。</p>
+<h3 id="22-创建-anaconda-环境安装-cuda-和-pytorch">2.2 创建 Anaconda 环境,安装 CUDA 和 PyTorch</h3>
+<p>用 Anaconda 新建一个名为 LLaMA 的环境，使用 python3.11</p>
+<pre tabindex="0"><code>conda create -n LLaMA python=3.11
+# 中间会询问你是否 proceed（继续），输入y然后回车即可
+</code></pre><p>激活这个环境，注意：<strong>在每次重新登陆的时候，必须输入以下命令激活这个环境，因为你在这个环境中安装了依赖项，否则无法找到依赖项</strong></p>
+<pre tabindex="0"><code>conda activate LLaMA
+# 成功后应该在命令行的用户前显示&#39;(LLaMA)&#39;字样
+</code></pre><figure><a class="lightgallery" href="../images/llama1.png" title="../images/llama1.png" data-thumbnail="../images/llama1.png" data-sub-html="<h2>LLaMa字样</h2>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="../images/llama1.png"
+            data-srcset="../images/llama1.png, ../images/llama1.png 1.5x, ../images/llama1.png 2x"
+            data-sizes="auto"
+            alt="../images/llama1.png" />
+    </a><figcaption class="image-caption">LLaMa字样</figcaption>
+    </figure>
+<p>然后我们来安装 CUDA，但是，<strong>什么是 CUDA 呢?</strong>
+CUDA 是 NVIDIA 推出的一种软硬件集成技术，我们都知道显卡通常用于进行图像处理，比如电脑上运行的大型3D游戏，它的流畅程度和帧数都很吃 GPU 的水平，GPU 的特点是可以处理大型并法运算，而这种优势和在机器学习等领域非常有用。CUDA 能让我们利用这种 GPU 的这种特点来加速计算,但是 AMD 的显卡不支持这种技术，所以你需要 NVIDIA 的GPU。</p>
+<p>接下来我们来安装 CUDA ，首先查看你的显卡支持的 CUDA 版本，在 bash 命令行输入这行代码</p>
+<pre tabindex="0"><code>nvidia-smi
+</code></pre><p><figure><a class="lightgallery" href="../images/llama2.png" title="nvidia-smi" data-thumbnail="../images/llama2.png" data-sub-html="<h2>输出后产生的界面，CUDA 版本在右上角</h2><p>nvidia-smi</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="../images/llama2.png"
+            data-srcset="../images/llama2.png, ../images/llama2.png 1.5x, ../images/llama2.png 2x"
+            data-sizes="auto"
+            alt="../images/llama2.png" />
+    </a><figcaption class="image-caption">输出后产生的界面，CUDA 版本在右上角</figcaption>
+    </figure></p>
+<p>当前的 CUDA 版本，显示在表格最上面的一行。直接前往<a href="https://developer.nvidia.cn/cuda-downloads?target_os=Linux&amp;target_arch=x86_64&amp;Distribution=Ubuntu&amp;target_version=22.04" target="_blank" rel="noopener noreffer ">NVIDIA官网</a>选择对应操作系统、架构等下载对应 CUDA 就好。</p>
+<p><figure><a class="lightgallery" href="../images/llama3.png" title="CUDA" data-thumbnail="../images/llama3.png" data-sub-html="<h2>选择正确的 CUDA 版本</h2><p>CUDA</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="../images/llama3.png"
+            data-srcset="../images/llama3.png, ../images/llama3.png 1.5x, ../images/llama3.png 2x"
+            data-sizes="auto"
+            alt="../images/llama3.png" />
+    </a><figcaption class="image-caption">选择正确的 CUDA 版本</figcaption>
+    </figure></p>
+<p>在安装 PyTorch 之前先简单介绍一下，它是一个 Python 程序库，有助于构建深度学习项目。它非常灵活，并允许我们使用深度学习领域惯用的 Python 来表示深度学习模型。它非常便捷，在刚刚创立的时候就吸引了许多使用者，并且在第 1 次发布之后的几年里，它已经成为应用程序中使用最广泛的深度学习工具之一，另一个比较出名的工具是 Tensorflow，但是更多被应用于生产中，在这里我们不作介绍。</p>
+<p>直接来到<a href="https://pytorch.org/get-started/locally/" target="_blank" rel="noopener noreffer ">PyTorch官网</a>选择正确版本并下载。</p>
+<p><figure><a class="lightgallery" href="../images/llama4.png" title="PyTorch" data-thumbnail="../images/llama4.png" data-sub-html="<h2>选择正确的PyTorch版本</h2><p>PyTorch</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="../images/llama4.png"
+            data-srcset="../images/llama4.png, ../images/llama4.png 1.5x, ../images/llama4.png 2x"
+            data-sizes="auto"
+            alt="../images/llama4.png" />
+    </a><figcaption class="image-caption">选择正确的PyTorch版本</figcaption>
+    </figure>
+比如我想要下载基于 linux，Pip 方法下载 Python 语言，CUDA11.8的就需要运行这行命令</p>
+<pre tabindex="0"><code>pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+</code></pre><h2 id="3安装-llama-factory">3.安装 LLaMA-Factory</h2>
+<h3 id="31-下载llama-facroty仓库">3.1 下载LLaMA-Facroty仓库</h3>
+<p>为什么选择 LLaMA-Factory ? 因为它支持目前多种模型，集成了许多方法，支持多种精度，并且有非常易用的 webui 界面，对新手非常友好。在 github 上<a href="https://github.com/hiyouga/LLaMA-Factory/blob/main/README_zh.md" target="_blank" rel="noopener noreffer ">项目地址</a></p>
+<p>运行以下代码来安装LLaMA-Factory</p>
+<pre tabindex="0"><code>git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
+cd LLaMA-Factory
+pip install -e &#34;.[torch,metrics]&#34;
+</code></pre><p>可选的额外依赖项：torch、torch-npu、metrics、deepspeed、bitsandbytes、hqq、eetq、gptq、awq、aqlm、vllm、galore、badam、qwen、modelscope、quality</p>
+<h3 id="32-通过远程机器访问-webui">3.2 通过远程机器访问 webui</h3>
+<p>在本地，我们使用这行代码</p>
+<pre tabindex="0"><code>llamafactory-cli webui
+</code></pre><p><figure><a class="lightgallery" href="../images/llama5.png" title="webui" data-thumbnail="../images/llama5.png" data-sub-html="<h2>打开的 webui </h2><p>webui</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="../images/llama5.png"
+            data-srcset="../images/llama5.png, ../images/llama5.png 1.5x, ../images/llama5.png 2x"
+            data-sizes="auto"
+            alt="../images/llama5.png" />
+    </a><figcaption class="image-caption">打开的 webui </figcaption>
+    </figure>
+启动 webui ，在命令行界面找到对应的网址访问即可（以0.0.0.0开头）但是这无法通过外部网络访问，只能在本机进行操作。现在我们通过远程机器访问它的 webui ，需要修改 launch() 文件。<br>
+首先找到<code>LLaMA-Factory/src/llamafactory/webui</code>这个目录，打开<code>interface.py</code>这个文件，将 run_web_ui() 和 run_web_demo() 函数中各自最后一行的<code>launch()</code>函数修改成这样</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-py" data-lang="py"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">run_web_ui</span>() <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>    gradio_share <span style="color:#f92672">=</span> os<span style="color:#f92672">.</span>environ<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;GRADIO_SHARE&#34;</span>, <span style="color:#e6db74">&#34;0&#34;</span>)<span style="color:#f92672">.</span>lower() <span style="color:#f92672">in</span> [<span style="color:#e6db74">&#34;true&#34;</span>, <span style="color:#e6db74">&#34;1&#34;</span>]
+</span></span><span style="display:flex;"><span>    server_name <span style="color:#f92672">=</span> os<span style="color:#f92672">.</span>environ<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;GRADIO_SERVER_NAME&#34;</span>, <span style="color:#e6db74">&#34;0.0.0.0&#34;</span>)
+</span></span><span style="display:flex;"><span>    create_ui()<span style="color:#f92672">.</span>queue()<span style="color:#f92672">.</span>launch(share<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, server_name<span style="color:#f92672">=</span>server_name, inbrowser<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>,server_port<span style="color:#f92672">=</span><span style="color:#ae81ff">8887</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">run_web_demo</span>() <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>    gradio_share <span style="color:#f92672">=</span> os<span style="color:#f92672">.</span>environ<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;GRADIO_SHARE&#34;</span>, <span style="color:#e6db74">&#34;0&#34;</span>)<span style="color:#f92672">.</span>lower() <span style="color:#f92672">in</span> [<span style="color:#e6db74">&#34;true&#34;</span>, <span style="color:#e6db74">&#34;1&#34;</span>]
+</span></span><span style="display:flex;"><span>    server_name <span style="color:#f92672">=</span> os<span style="color:#f92672">.</span>environ<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;GRADIO_SERVER_NAME&#34;</span>, <span style="color:#e6db74">&#34;0.0.0.0&#34;</span>)
+</span></span><span style="display:flex;"><span>    client_loop: send disconnect: Broken pipeue, server_name<span style="color:#f92672">=</span>server_name, inbrowser<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>,server_port<span style="color:#f92672">=</span><span style="color:#ae81ff">8887</span>)
+</span></span></code></pre></div><p><strong>注意:</strong><code>share=True</code>表示允许共享，<code>server_port</code>规定了开启的端口，在这里规定为8887,接着就可以通过远程界面访问 webui 了，记得将0.0.0.0替换成远程主机的ip地址，如果无法连接，查看你远程主机的防火墙配置。</p>
+<h3 id="33-通过-tmux-这一终端复用器解决-ssh-连接的问题">3.3 通过 tmux 这一终端复用器解决 ssh 连接的问题</h3>
+<p>当你通过 ssh 连接远程主机运行某种任务的时候，可能会出现一些让人非常红温的问题： ssh 为了保证安全性，若几分钟没有操作就会断开连接，这样一来我们跑在远程主机上的任务就莫名其妙结束了，而且我们也不太想为了一个耗费很长时间的学习任务一直开着我们的电脑，或者一直开着我们的 ssh 连接，如果中间网莫名其妙断了几秒，我肯定相当沮丧，还得重新开始这个任务，白白浪费时间，我们引入 tmux 来解决这个问题。</p>
+<p>像 tmux 这类的终端多路复用器可以允许我们基于面板和标签分割出多个终端窗口，这样便可以同时与多个 shell 会话进行交互，终端多路复用使我们可以分离当前终端会话并在将来重新连接。让你的远程工作非常舒服，避免了 nohup 和其他类似技巧的使用。</p>
+<p>tmux 的安装命令</p>
+<pre tabindex="0"><code>sudo apt-get install tmux
+</code></pre><p>启动tmux就直接在终端执行<code>tmux</code>就可以。</p>
+<p><figure><a class="lightgallery" href="../images/llama6.png" title="tmux" data-thumbnail="../images/llama6.png" data-sub-html="<h2>tmux界面示例</h2><p>tmux</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="../images/llama6.png"
+            data-srcset="../images/llama6.png, ../images/llama6.png 1.5x, ../images/llama6.png 2x"
+            data-sizes="auto"
+            alt="../images/llama6.png" />
+    </a><figcaption class="image-caption">tmux界面示例</figcaption>
+    </figure></p>
+<p>在这里我只介绍一些简单的tmux命令，你可以在<a href="https://www.ruanyifeng.com/blog/2019/10/tmux.html" target="_blank" rel="noopener noreffer ">这里</a>看到比较详细的操作，还可以看<a href="https://missing-semester-cn.github.io/2020/command-line/" target="_blank" rel="noopener noreffer ">这个</a>和它配套的视频学习其他的有关计算机操作的相关知识。</p>
+<p>在ssh连接成功后，键入<code>tmux</code>你会看到一个长得和终端差不多的界面，你可以在里面干任何你正常连接ssh之后做的事情，然后，如果你想把某个操作放在后台运行，键入<code>Ctrl+b</code>，再键入<code>d</code>，你就能看到你原来的ssh连接刚刚连上的样子，原来的窗口去哪里了呢？键入<code>tmux ls</code>指令查看目前所有窗口，第一个窗口一般表示为 0 ，输入<code>tmux attach -t 0</code>来重新进入后台的窗口，立即开始你的工作。</p>
+<p>它的好处是你可以不用管ssh连接状态，任务会在 tmux 后台窗口里继续运行，你想干别的什么都可以，你还可以创建更多的 tmux 窗口，进行工作，然后退出ssh连接，无论你什么时候重新连接，那些窗口都保留在你退出后继续运行的样子，你可以快速恢复工作流。</p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2024-07-16</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/" data-title="使用LLaMA Factory训练模型指北（一、环境安装)"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="分享到 Hacker News" data-sharer="hackernews" data-url="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/" data-title="使用LLaMA Factory训练模型指北（一、环境安装)"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/" data-title="使用LLaMA Factory训练模型指北（一、环境安装)"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@7.3.0/icons/line.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/" data-title="使用LLaMA Factory训练模型指北（一、环境安装)"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/%E5%BC%80%E5%8D%9A%E7%BA%AA%E5%BF%B5/" class="prev" rel="prev" title="开博纪念"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>开博纪念</a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2023 - 2024</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank"></a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.5.0/css/lightgallery-bundle.min.css"><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery@2.5.0/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery@2.5.0/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery@2.5.0/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.5.1/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":100},"comment":{},"lightgallery":true};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>
