@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-cn">
     <head>
-	<meta name="generator" content="Hugo 0.128.2">
+	<meta name="generator" content="Hugo 0.129.0">
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noodp" />
@@ -71,7 +71,16 @@
         alt="/img/avatar.webp"
         title="/img/avatar.webp" width="600" height="600" /></a></div><h1 class="home-title">Croakero</h1><div class="home-subtitle">说话时，他的翅膀不时张开，像要飞动，却又垂下了——</div><div class="links"><a href="https://github.com/Croakero" title="GitHub" target="_blank" rel="noopener noreffer me"><i class="fab fa-github fa-fw" aria-hidden="true"></i></a><a href="https://t.me/luzhishen200" title="Telegram" target="_blank" rel="noopener noreffer me"><i class="fab fa-telegram-plane fa-fw" aria-hidden="true"></i></a></div></div>
 <article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/">使用LLaMA Factory训练模型指北（一、环境安装)</a>
+        <a href="/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/">使用 LLaMA Factory 训练模型指北（二、从 Webui 入手）</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="https://github.com/Croakero" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>croakero</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2024-07-17">2024-07-17</time></span></div><div class="content">在上篇内容中我们讲解了将 LLaMA-Factory 部署到远程（或本地）服务器的方法，并且能够正常启动 webui ，使用了 tmux 复用终端，解决ssh连接的问题，现在我们直接在浏览器输入对应地址，就可以看到清爽的界面，下一步就是解释 webui 上向我们展示的内容。
+1.概览 webui 差不多长这个样子 不要被它吓到了 区域 解释 语言 顾名思义，可以选择对应的语言，有中文（zh）英文（en）和俄文（ru） 模型名称 可选的有非常多来自huggingface社区的支持，注意，这些模型并不保存在你的本地，而是在https://huggingface.co/这个网站上面，在使用的时候会下载到本地，如果你采取这种方式，遵循 LLaMA-Factory 项目地址中的方法就好，如果你下载到本地，由于不明确路径是什么，我直接填写了绝对路径上去，实测是可以运行的，也可以填写相对路径，相对路径应该是相对于LLaMA-Factory目录内部的路径 模型路径 本地文件，填写本地路径；如果直接用 huggingface 上的模型，就填写模型路径，在选择模型名称时会自动填写 第一行就是这样，在上面的图片中，我采用的是 LLaMA3B-Chinese-Chat 这个模型，保存在本地，使用绝对路径。
+2.微调方法和检查点路径 微调方法可选的有三种类，见下面的表格，该表中的内容在命令中反映为--finetuning_type
+微调方法 介绍 full 全量微调，把整个预训练模型的每一个层，所有的模型参数都进行调整，来适应我们需要的下游任务， GPU 计算资源占用相当高，是一种比较早期的模型训练方法，后来的一些研究和论文研究了其他微调的策略，只对部分参数进行微调，有一些能在大大减少 GPU 占用的情况下达到相似的效果 freeze 冻结方法，将整个预训练模型的大多数层冻结，只调整部分层的参数，一般是后面的层，因为前面的层更倾向于处理输入，后面的层更贴近输出，大模型在前面的层已经很好学到了语言能力，主要是调整其组织语言的方式，由于对调整参数较少， GPU 占用相应地比全量微调低一些 LoRA 低秩适应，一种又新又好的方法，原论文链接，有洋文阅读问题的话，这是一个还行的论文翻译，它基于一个“模型的适应过程中权重的变化具有较低的内在秩”的假设，虽然一般来说层的权重矩阵具有全秩，但是当适应一个特定的任务的时候，这个语言模型的矩阵维度会降低，按我的理解就是矩阵从它的向量空间映射到它的子空间（也就是从原本任务映射到一个子下游任务），其中有一些维度的内容不在子空间中起效果，比如一个描述三维空间的矩阵投影到二维，有一个维度被舍弃了，这个多余的维度就是不在子任务中的内容。 下面是不同微调方法所需的 GPU 显存，其中 QLoRA 是损失精度，量化后的 LoRA 方法
+LLAMA-Factory 给出的不同微调方法所需 GPU 显存 检查点路径一栏给出了检查点保存的位置，在命令中反映为--adapter_name_or_path，每次训练结束之后，训练的“新”内容会存储在这个位置，需要把它和原模型合并，才能输出为一个新的总模型的形式，在你没有合并模型的时候，选择对应的检查点路径可以非常方便地加载“总”模型，而不用你再手动每次都合并后再测试。合并模型在 Export 一栏，选择对应检查点后直接导出就好。
+3.Train 训练一栏 训练阶段可选项 解释 Supervised Fine-Tuning（监督微调，SFT） 使用一个已经训练好的模型，也就是预训练模型作为初始状态，然后使用目标任务的训练集对模型进行微调，避免了从头开始训练模型，一般只修改模型中的某些层。 Reward Modeling（奖励建模） 当模型产生一个输出时，人类会对它的输出进行评估，告诉它什么是好的什么是不好的，让大模型来向着好的方向努力，避免产生坏的结果的的训练方法。 PPO 是 OpenAI 在 2017 年提出的一种强化学习算法，是基于策略优化的算法，用于训练能够最大化累积奖励的智能体。 PPO 算法通过在每次更新时限制新策略与旧策略之间的差异，从而更稳定地更新策略参数。这种方法有助于避免训练过程中出现的不稳定性和剧烈波动，使得算法更容易收敛并学习到更好的策略。论文链接 DPO 一种稳定的、性能和计算成本轻量级的强化学习算法。通过利用奖励函数与最优策略之间的映射关系，证明这个受限的奖励最大化问题可以通过单阶段的策略训练来精确优化，本质上是在人类偏好数据上解决一个分类问题。即一种稳定低成本的 PPO ,论文链接 KTO KTO不需要偏好数据，可以直接利用二元信号标记的数据来训练算法，对于负样本更加敏感。实验表明，KTO算法在一定参数范围内能够超过DPO算法，并且KTO可以处理数据正负样本不平衡的情况。论文链接还有不错的中文讲解 数据路径默认为 data ，就是 LLaMA-Factory 文件夹下（后面以相对路径 LLaMA-Factory 目录下表示，不再赘述）</div><div class="post-footer">
+        <a href="/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/">阅读全文</a></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/">使用LLaMA Factory训练模型指北（一、环境安装）</a>
     </h1><div class="post-meta"><span class="post-author"><a href="https://github.com/Croakero" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>croakero</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2024-07-16">2024-07-16</time></span></div><div class="content">本文适合于没有机器学习前置知识，但具有一定微积分和线性代数理解的读者，如果没有相应知识，文章中会给出稍许补充。
 1.准备工作 支持 CUDA 的 GPU ，如果没有，可以自行联系远程服务器 Linux bash 环境，如果没有，可以使用虚拟机构建 能够连接到 https://huggingface.co/ 的网络，用于下载模型,如果没有，需要用其他方法下载。能够连接到 https://github.com 的网络，用于下载 github 仓库，如果没有，找个会的人教你，要么就去网上搜 一些基础的 linux 操作方法，文章中会提及部分 本文基于 Ubuntu22.04LTS 2.使用 Anaconda 管理包 2.1 安装 Anaconda Anaconda 环境相较于传统的 pip 包管理来说，可以方便快捷地切换不同环境，如果把 pip 比作把所有的文件都摊到桌面上的笨手笨脚管理员， Anaconda 就像把文件归类放进不同文件夹里的爱干净管理员，这样的文件夹在 Anaconda 中称为“环境”。运行不同的程序所需的依赖不同，有时候会出现冲突，同时需要某个包的不同版本，就可以通过设置不同环境，基于某个环境运行不同程序。
 安装 Anaconda 依赖代码如下：

@@ -3,10 +3,128 @@
         <title>croakero</title>
         <link>http://croakero.github.io/</link>
         <description>Croakero&#39;s Blog</description>
-        <generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Tue, 16 Jul 2024 09:15:11 &#43;0800</lastBuildDate>
+        <generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Wed, 17 Jul 2024 09:43:24 &#43;0800</lastBuildDate>
             <atom:link href="http://croakero.github.io/index.xml" rel="self" type="application/rss+xml" />
         <item>
-    <title>使用LLaMA Factory训练模型指北（一、环境安装)</title>
+    <title>使用 LLaMA Factory 训练模型指北（二、从 Webui 入手）</title>
+    <link>http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/</link>
+    <pubDate>Wed, 17 Jul 2024 09:43:24 &#43;0800</pubDate>
+    <author>croakero</author>
+    <guid>http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/</guid>
+    <description><![CDATA[<p>在上篇内容中我们讲解了将 LLaMA-Factory 部署到远程（或本地）服务器的方法，并且能够正常启动 webui ，使用了 tmux 复用终端，解决ssh连接的问题，现在我们直接在浏览器输入对应地址，就可以看到清爽的界面，下一步就是解释 webui 上向我们展示的内容。</p>
+<h2 id="1概览">1.概览</h2>
+<p>webui 差不多长这个样子
+<figure><a class="lightgallery" href="../images/llama7.png" title="webui" data-thumbnail="../images/llama7.png" data-sub-html="<h2>不要被它吓到了</h2><p>webui</p>">
+        
+    </a><figcaption class="image-caption">不要被它吓到了</figcaption>
+    </figure></p>
+<table>
+<thead>
+<tr>
+<th>区域</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>语言</td>
+<td>顾名思义，可以选择对应的语言，有中文（zh）英文（en）和俄文（ru）</td>
+</tr>
+<tr>
+<td>模型名称</td>
+<td>可选的有非常多来自huggingface社区的支持，注意，这些模型并不保存在你的本地，而是在<a href="https://huggingface.co/" target="_blank" rel="noopener noreffer ">https://huggingface.co/</a>这个网站上面，在使用的时候会下载到本地，如果你采取这种方式，遵循<a href="https://github.com/hiyouga/LLaMA-Factory/blob/main/README_zh.md#%E6%A8%A1%E5%9E%8B" target="_blank" rel="noopener noreffer "> LLaMA-Factory 项目地址</a>中的方法就好，如果你下载到本地，由于不明确路径是什么，我直接填写了绝对路径上去，实测是可以运行的，也可以填写相对路径，相对路径应该是相对于LLaMA-Factory目录内部的路径</td>
+</tr>
+<tr>
+<td>模型路径</td>
+<td>本地文件，填写本地路径；如果直接用 huggingface 上的模型，就填写模型路径，在选择模型名称时会自动填写</td>
+</tr>
+</tbody>
+</table>
+<p>第一行就是这样，在上面的图片中，我采用的是 LLaMA3B-Chinese-Chat 这个模型，保存在本地，使用绝对路径。</p>
+<h2 id="2微调方法和检查点路径">2.微调方法和检查点路径</h2>
+<p>微调方法可选的有三种类，见下面的表格，该表中的内容在命令中反映为<code>--finetuning_type</code></p>
+<table>
+<thead>
+<tr>
+<th>微调方法</th>
+<th>介绍</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>full</td>
+<td>全量微调，把整个预训练模型的每一个层，所有的模型参数都进行调整，来适应我们需要的下游任务， GPU 计算资源占用相当高，是一种比较早期的模型训练方法，后来的一些研究和论文研究了其他微调的策略，只对部分参数进行微调，有一些能在大大减少 GPU 占用的情况下达到相似的效果</td>
+</tr>
+<tr>
+<td>freeze</td>
+<td>冻结方法，将整个预训练模型的大多数层冻结，只调整部分层的参数，一般是后面的层，因为前面的层更倾向于处理输入，后面的层更贴近输出，大模型在前面的层已经很好学到了语言能力，主要是调整其组织语言的方式，由于对调整参数较少， GPU 占用相应地比全量微调低一些</td>
+</tr>
+<tr>
+<td>LoRA</td>
+<td>低秩适应，一种又新又好的方法，<a href="https://arxiv.org/abs/2106.09685" target="_blank" rel="noopener noreffer ">原论文链接</a>，有洋文阅读问题的话，这是一个还行的<a href="https://www.cnblogs.com/xiximayou/p/17283052.html" target="_blank" rel="noopener noreffer ">论文翻译</a>，它基于一个“模型的适应过程中权重的变化具有较低的内在秩”的假设，虽然一般来说层的权重矩阵具有全秩，但是当适应一个特定的任务的时候，这个语言模型的矩阵维度会降低，按我的理解就是矩阵从它的向量空间映射到它的子空间（也就是从原本任务映射到一个子下游任务），其中有一些维度的内容不在子空间中起效果，比如一个描述三维空间的矩阵投影到二维，有一个维度被舍弃了，这个多余的维度就是不在子任务中的内容。</td>
+</tr>
+</tbody>
+</table>
+<p>下面是不同微调方法所需的 GPU 显存，其中 QLoRA 是损失精度，量化后的 LoRA 方法</p>
+<p><figure><a class="lightgallery" href="../images/llama8.png" title="训练要求" data-thumbnail="../images/llama8.png" data-sub-html="<h2>LLAMA-Factory 给出的不同微调方法所需 GPU 显存</h2><p>训练要求</p>">
+        
+    </a><figcaption class="image-caption">LLAMA-Factory 给出的不同微调方法所需 GPU 显存</figcaption>
+    </figure></p>
+<p>检查点路径一栏给出了检查点保存的位置，在命令中反映为<code>--adapter_name_or_path</code>，每次训练结束之后，训练的“新”内容会存储在这个位置，需要把它和原模型合并，才能输出为一个新的总模型的形式，在你没有合并模型的时候，选择对应的检查点路径可以非常方便地加载“总”模型，而不用你再手动每次都合并后再测试。合并模型在 Export 一栏，选择对应检查点后直接导出就好。</p>
+<h2 id="3train-训练一栏">3.Train 训练一栏</h2>
+<table>
+<thead>
+<tr>
+<th>训练阶段可选项</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Supervised Fine-Tuning（监督微调，SFT）</td>
+<td>使用一个已经训练好的模型，也就是预训练模型作为初始状态，然后使用目标任务的训练集对模型进行微调，避免了从头开始训练模型，一般只修改模型中的某些层。</td>
+</tr>
+<tr>
+<td>Reward Modeling（奖励建模）</td>
+<td>当模型产生一个输出时，人类会对它的输出进行评估，告诉它什么是好的什么是不好的，让大模型来向着好的方向努力，避免产生坏的结果的的训练方法。</td>
+</tr>
+<tr>
+<td>PPO</td>
+<td>是 OpenAI 在 2017 年提出的一种强化学习算法，是基于策略优化的算法，用于训练能够最大化累积奖励的智能体。 PPO 算法通过在每次更新时限制新策略与旧策略之间的差异，从而更稳定地更新策略参数。这种方法有助于避免训练过程中出现的不稳定性和剧烈波动，使得算法更容易收敛并学习到更好的策略。<a href="https://arxiv.org/abs/1707.06347" target="_blank" rel="noopener noreffer ">论文链接</a></td>
+</tr>
+<tr>
+<td>DPO</td>
+<td>一种稳定的、性能和计算成本轻量级的强化学习算法。通过利用奖励函数与最优策略之间的映射关系，证明这个受限的奖励最大化问题可以通过单阶段的策略训练来精确优化，本质上是在人类偏好数据上解决一个分类问题。即一种稳定低成本的 PPO ,<a href="https://arxiv.org/abs/2305.18290" target="_blank" rel="noopener noreffer ">论文链接</a></td>
+</tr>
+<tr>
+<td>KTO</td>
+<td>KTO不需要偏好数据，可以直接利用二元信号标记的数据来训练算法，对于负样本更加敏感。实验表明，KTO算法在一定参数范围内能够超过DPO算法，并且KTO可以处理数据正负样本不平衡的情况。<a href="https://arxiv.org/abs/2402.01306" target="_blank" rel="noopener noreffer ">论文链接</a>还有不错的<a href="https://zhuanlan.zhihu.com/p/696331582" target="_blank" rel="noopener noreffer ">中文讲解</a></td>
+</tr>
+</tbody>
+</table>
+<p>数据路径默认为 data ，就是 LLaMA-Factory 文件夹下（后面以相对路径 LLaMA-Factory 目录下表示，不再赘述）</p>
+<p>数据集可选，一些 demo 保存在 data 文件夹下，可以直接测试。</p>
+<p><strong>注意：</strong> 如果你自己新建数据集，一定要把你的数据集放在 data 目录下，并且在 dataset_info.json中添加，<strong>并且要先看 <a href="https://github.com/hiyouga/LLaMA-Factory/blob/main/data/README_zh.md" target="_blank" rel="noopener noreffer ">README_zh.md</a> 下的内容</strong></p>
+<p>比如我新建了一个叫做 &ldquo;0_600.json&rdquo; 的数据集，描述为stack_demo，那么应该在 dataset_info.json 中是这样：
+<figure><a class="lightgallery" href="../images/llama9.png" title="dataset_info" data-thumbnail="../images/llama9.png" data-sub-html="<h2>dataset_info.json 中</h2><p>dataset_info</p>">
+        
+    </a><figcaption class="image-caption">dataset_info.json 中</figcaption>
+    </figure>
+在webui中长这样：
+<figure><a class="lightgallery" href="../images/llama10.png" title="webui" data-thumbnail="../images/llama10.png" data-sub-html="<h2>在 webui 中的第二行，可以选择</h2><p>webui</p>">
+        
+    </a><figcaption class="image-caption">在 webui 中的第二行，可以选择</figcaption>
+    </figure></p>
+<h3 id="31-adamw-优化器">3.1 AdamW 优化器</h3>
+<p>是一种 Adam 优化器的改进形式，一种自动分析 loss 并且调整优化学习率的优化器，分析可以看<a href="https://www.jiqizhixin.com/articles/2018-07-03-14" target="_blank" rel="noopener noreffer ">机器之心的这篇文章</a>。学习的过程是在给定的一个初始点上计算损失函数的梯度，因为梯度的方向就是增加最快的方向，所以我们的点应该向梯度的反方向滑动一个距离（称为步长），然后再在这个点通过一些聪明的方法计算我们接下来要前往的方向，从而找到损失函数值很低的一个点。 AdamW 优化器就是一个非常聪明的方法。</p>
+<p>最大梯度范数是在一些情况下，会出现梯度爆炸等不符合我们预期的情况，为了避免这些事情，我们有根据地限定梯度的范围，超出这个范围的就用范围的边界来表示。</p>
+<p>训练精度上，在浮点数处理方面，计算机一般使用的 float 数据类型（称为 FP32）也就是单精度浮点数，根据 IEEE 标准，阶码是 8 位，尾数是 23 位。而半精度浮点数有两种类型（BF16 和 FP16），BF16 用 8 位表示阶码，7 位表示尾数；FP16 用 5 位表示阶码，10位表示尾数，在训练之前，注意<strong>你的 GPU 是否支持 BF16 数据类型</strong></p>
+<p>学习率调节器一栏内容太多，就不在这里讲了。
+对于 Evaluate&amp;Predict 一栏，有问题的可以看到<a href="https://www.ibm.com/docs/zh/watsonx/saas?topic=lab-model-parameters-prompting" target="_blank" rel="noopener noreffer ">IBM百科中的有关讲解</a></p>
+]]></description>
+</item>
+<item>
+    <title>使用LLaMA Factory训练模型指北（一、环境安装）</title>
     <link>http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/</link>
     <pubDate>Tue, 16 Jul 2024 09:15:11 &#43;0800</pubDate>
     <author>croakero</author>

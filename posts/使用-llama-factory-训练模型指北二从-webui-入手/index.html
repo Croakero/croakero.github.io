@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>使用 LLaMA Factory 训练模型指北（二、从 Webui 入手） - croakero</title><meta name="Description" content="Croakero&#39;s Blog"><meta property="og:url" content="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/">
+  <meta property="og:site_name" content="croakero">
+  <meta property="og:title" content="使用 LLaMA Factory 训练模型指北（二、从 Webui 入手）">
+  <meta property="og:description" content="在上篇内容中我们讲解了将 LLaMA-Factory 部署到远程（或本地）服务器的方法，并且能够正常启动 webui ，使用了 tmux 复用终端，解决ssh连接的问题，现在我们直接在浏览器输入对应地址，就可以看到清爽的界面，下一步就是解释 webui 上向我们展示的内容。
+1.概览 webui 差不多长这个样子 不要被它吓到了 区域 解释 语言 顾名思义，可以选择对应的语言，有中文（zh）英文（en）和俄文（ru） 模型名称 可选的有非常多来自huggingface社区的支持，注意，这些模型并不保存在你的本地，而是在https://huggingface.co/这个网站上面，在使用的时候会下载到本地，如果你采取这种方式，遵循 LLaMA-Factory 项目地址中的方法就好，如果你下载到本地，由于不明确路径是什么，我直接填写了绝对路径上去，实测是可以运行的，也可以填写相对路径，相对路径应该是相对于LLaMA-Factory目录内部的路径 模型路径 本地文件，填写本地路径；如果直接用 huggingface 上的模型，就填写模型路径，在选择模型名称时会自动填写 第一行就是这样，在上面的图片中，我采用的是 LLaMA3B-Chinese-Chat 这个模型，保存在本地，使用绝对路径。
+2.微调方法和检查点路径 微调方法可选的有三种类，见下面的表格，该表中的内容在命令中反映为--finetuning_type
+微调方法 介绍 full 全量微调，把整个预训练模型的每一个层，所有的模型参数都进行调整，来适应我们需要的下游任务， GPU 计算资源占用相当高，是一种比较早期的模型训练方法，后来的一些研究和论文研究了其他微调的策略，只对部分参数进行微调，有一些能在大大减少 GPU 占用的情况下达到相似的效果 freeze 冻结方法，将整个预训练模型的大多数层冻结，只调整部分层的参数，一般是后面的层，因为前面的层更倾向于处理输入，后面的层更贴近输出，大模型在前面的层已经很好学到了语言能力，主要是调整其组织语言的方式，由于对调整参数较少， GPU 占用相应地比全量微调低一些 LoRA 低秩适应，一种又新又好的方法，原论文链接，有洋文阅读问题的话，这是一个还行的论文翻译，它基于一个“模型的适应过程中权重的变化具有较低的内在秩”的假设，虽然一般来说层的权重矩阵具有全秩，但是当适应一个特定的任务的时候，这个语言模型的矩阵维度会降低，按我的理解就是矩阵从它的向量空间映射到它的子空间（也就是从原本任务映射到一个子下游任务），其中有一些维度的内容不在子空间中起效果，比如一个描述三维空间的矩阵投影到二维，有一个维度被舍弃了，这个多余的维度就是不在子任务中的内容。 下面是不同微调方法所需的 GPU 显存，其中 QLoRA 是损失精度，量化后的 LoRA 方法
+LLAMA-Factory 给出的不同微调方法所需 GPU 显存 检查点路径一栏给出了检查点保存的位置，在命令中反映为--adapter_name_or_path，每次训练结束之后，训练的“新”内容会存储在这个位置，需要把它和原模型合并，才能输出为一个新的总模型的形式，在你没有合并模型的时候，选择对应的检查点路径可以非常方便地加载“总”模型，而不用你再手动每次都合并后再测试。合并模型在 Export 一栏，选择对应检查点后直接导出就好。
+3.Train 训练一栏 训练阶段可选项 解释 Supervised Fine-Tuning（监督微调，SFT） 使用一个已经训练好的模型，也就是预训练模型作为初始状态，然后使用目标任务的训练集对模型进行微调，避免了从头开始训练模型，一般只修改模型中的某些层。 Reward Modeling（奖励建模） 当模型产生一个输出时，人类会对它的输出进行评估，告诉它什么是好的什么是不好的，让大模型来向着好的方向努力，避免产生坏的结果的的训练方法。 PPO 是 OpenAI 在 2017 年提出的一种强化学习算法，是基于策略优化的算法，用于训练能够最大化累积奖励的智能体。 PPO 算法通过在每次更新时限制新策略与旧策略之间的差异，从而更稳定地更新策略参数。这种方法有助于避免训练过程中出现的不稳定性和剧烈波动，使得算法更容易收敛并学习到更好的策略。论文链接 DPO 一种稳定的、性能和计算成本轻量级的强化学习算法。通过利用奖励函数与最优策略之间的映射关系，证明这个受限的奖励最大化问题可以通过单阶段的策略训练来精确优化，本质上是在人类偏好数据上解决一个分类问题。即一种稳定低成本的 PPO ,论文链接 KTO KTO不需要偏好数据，可以直接利用二元信号标记的数据来训练算法，对于负样本更加敏感。实验表明，KTO算法在一定参数范围内能够超过DPO算法，并且KTO可以处理数据正负样本不平衡的情况。论文链接还有不错的中文讲解 数据路径默认为 data ，就是 LLaMA-Factory 文件夹下（后面以相对路径 LLaMA-Factory 目录下表示，不再赘述）">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2024-07-17T09:43:24+08:00">
+    <meta property="article:modified_time" content="2024-07-17T09:43:24+08:00">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="使用 LLaMA Factory 训练模型指北（二、从 Webui 入手）">
+  <meta name="twitter:description" content="在上篇内容中我们讲解了将 LLaMA-Factory 部署到远程（或本地）服务器的方法，并且能够正常启动 webui ，使用了 tmux 复用终端，解决ssh连接的问题，现在我们直接在浏览器输入对应地址，就可以看到清爽的界面，下一步就是解释 webui 上向我们展示的内容。
+1.概览 webui 差不多长这个样子 不要被它吓到了 区域 解释 语言 顾名思义，可以选择对应的语言，有中文（zh）英文（en）和俄文（ru） 模型名称 可选的有非常多来自huggingface社区的支持，注意，这些模型并不保存在你的本地，而是在https://huggingface.co/这个网站上面，在使用的时候会下载到本地，如果你采取这种方式，遵循 LLaMA-Factory 项目地址中的方法就好，如果你下载到本地，由于不明确路径是什么，我直接填写了绝对路径上去，实测是可以运行的，也可以填写相对路径，相对路径应该是相对于LLaMA-Factory目录内部的路径 模型路径 本地文件，填写本地路径；如果直接用 huggingface 上的模型，就填写模型路径，在选择模型名称时会自动填写 第一行就是这样，在上面的图片中，我采用的是 LLaMA3B-Chinese-Chat 这个模型，保存在本地，使用绝对路径。
+2.微调方法和检查点路径 微调方法可选的有三种类，见下面的表格，该表中的内容在命令中反映为--finetuning_type
+微调方法 介绍 full 全量微调，把整个预训练模型的每一个层，所有的模型参数都进行调整，来适应我们需要的下游任务， GPU 计算资源占用相当高，是一种比较早期的模型训练方法，后来的一些研究和论文研究了其他微调的策略，只对部分参数进行微调，有一些能在大大减少 GPU 占用的情况下达到相似的效果 freeze 冻结方法，将整个预训练模型的大多数层冻结，只调整部分层的参数，一般是后面的层，因为前面的层更倾向于处理输入，后面的层更贴近输出，大模型在前面的层已经很好学到了语言能力，主要是调整其组织语言的方式，由于对调整参数较少， GPU 占用相应地比全量微调低一些 LoRA 低秩适应，一种又新又好的方法，原论文链接，有洋文阅读问题的话，这是一个还行的论文翻译，它基于一个“模型的适应过程中权重的变化具有较低的内在秩”的假设，虽然一般来说层的权重矩阵具有全秩，但是当适应一个特定的任务的时候，这个语言模型的矩阵维度会降低，按我的理解就是矩阵从它的向量空间映射到它的子空间（也就是从原本任务映射到一个子下游任务），其中有一些维度的内容不在子空间中起效果，比如一个描述三维空间的矩阵投影到二维，有一个维度被舍弃了，这个多余的维度就是不在子任务中的内容。 下面是不同微调方法所需的 GPU 显存，其中 QLoRA 是损失精度，量化后的 LoRA 方法
+LLAMA-Factory 给出的不同微调方法所需 GPU 显存 检查点路径一栏给出了检查点保存的位置，在命令中反映为--adapter_name_or_path，每次训练结束之后，训练的“新”内容会存储在这个位置，需要把它和原模型合并，才能输出为一个新的总模型的形式，在你没有合并模型的时候，选择对应的检查点路径可以非常方便地加载“总”模型，而不用你再手动每次都合并后再测试。合并模型在 Export 一栏，选择对应检查点后直接导出就好。
+3.Train 训练一栏 训练阶段可选项 解释 Supervised Fine-Tuning（监督微调，SFT） 使用一个已经训练好的模型，也就是预训练模型作为初始状态，然后使用目标任务的训练集对模型进行微调，避免了从头开始训练模型，一般只修改模型中的某些层。 Reward Modeling（奖励建模） 当模型产生一个输出时，人类会对它的输出进行评估，告诉它什么是好的什么是不好的，让大模型来向着好的方向努力，避免产生坏的结果的的训练方法。 PPO 是 OpenAI 在 2017 年提出的一种强化学习算法，是基于策略优化的算法，用于训练能够最大化累积奖励的智能体。 PPO 算法通过在每次更新时限制新策略与旧策略之间的差异，从而更稳定地更新策略参数。这种方法有助于避免训练过程中出现的不稳定性和剧烈波动，使得算法更容易收敛并学习到更好的策略。论文链接 DPO 一种稳定的、性能和计算成本轻量级的强化学习算法。通过利用奖励函数与最优策略之间的映射关系，证明这个受限的奖励最大化问题可以通过单阶段的策略训练来精确优化，本质上是在人类偏好数据上解决一个分类问题。即一种稳定低成本的 PPO ,论文链接 KTO KTO不需要偏好数据，可以直接利用二元信号标记的数据来训练算法，对于负样本更加敏感。实验表明，KTO算法在一定参数范围内能够超过DPO算法，并且KTO可以处理数据正负样本不平衡的情况。论文链接还有不错的中文讲解 数据路径默认为 data ，就是 LLaMA-Factory 文件夹下（后面以相对路径 LLaMA-Factory 目录下表示，不再赘述）">
+<meta name="application-name" content="My cool site">
+<meta name="apple-mobile-web-app-title" content="My cool site"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/" /><link rel="prev" href="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css"></noscript><link rel="preload" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "使用 LLaMA Factory 训练模型指北（二、从 Webui 入手）",
+        "inLanguage": "zh-cn",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/croakero.github.io\/posts\/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B\/"
+        },"genre": "posts","wordcount":  150 ,
+        "url": "http:\/\/croakero.github.io\/posts\/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B\/","datePublished": "2024-07-17T09:43:24+08:00","dateModified": "2024-07-17T09:43:24+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "croakero"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="croakero">CRCR</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a><a href="javascript:void(0);" class="menu-item language" title="选择语言">
+                    <i class="fa fa-globe" aria-hidden="true"></i>                      
+                    <select class="language-select" id="language-select-desktop" onchange="location = this.value;"><option value="/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/" selected></option></select>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="croakero">CRCR</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a><a href="javascript:void(0);" class="menu-item" title="选择语言">
+                    <i class="fa fa-globe fa-fw" aria-hidden="true"></i>
+                    <select class="language-select" onchange="location = this.value;"><option value="/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/" selected></option></select>
+                </a></div>
+    </div>
+</header><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">使用 LLaMA Factory 训练模型指北（二、从 Webui 入手）</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://github.com/Croakero" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>croakero</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2024-07-17">2024-07-17</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;约 150 字&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;预计阅读 1 分钟&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="true">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#1概览">1.概览</a></li>
+    <li><a href="#2微调方法和检查点路径">2.微调方法和检查点路径</a></li>
+    <li><a href="#3train-训练一栏">3.Train 训练一栏</a>
+      <ul>
+        <li><a href="#31-adamw-优化器">3.1 AdamW 优化器</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>在上篇内容中我们讲解了将 LLaMA-Factory 部署到远程（或本地）服务器的方法，并且能够正常启动 webui ，使用了 tmux 复用终端，解决ssh连接的问题，现在我们直接在浏览器输入对应地址，就可以看到清爽的界面，下一步就是解释 webui 上向我们展示的内容。</p>
+<h2 id="1概览">1.概览</h2>
+<p>webui 差不多长这个样子
+<figure><a class="lightgallery" href="../images/llama7.png" title="webui" data-thumbnail="../images/llama7.png" data-sub-html="<h2>不要被它吓到了</h2><p>webui</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="../images/llama7.png"
+            data-srcset="../images/llama7.png, ../images/llama7.png 1.5x, ../images/llama7.png 2x"
+            data-sizes="auto"
+            alt="../images/llama7.png" />
+    </a><figcaption class="image-caption">不要被它吓到了</figcaption>
+    </figure></p>
+<table>
+<thead>
+<tr>
+<th>区域</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>语言</td>
+<td>顾名思义，可以选择对应的语言，有中文（zh）英文（en）和俄文（ru）</td>
+</tr>
+<tr>
+<td>模型名称</td>
+<td>可选的有非常多来自huggingface社区的支持，注意，这些模型并不保存在你的本地，而是在<a href="https://huggingface.co/" target="_blank" rel="noopener noreffer ">https://huggingface.co/</a>这个网站上面，在使用的时候会下载到本地，如果你采取这种方式，遵循<a href="https://github.com/hiyouga/LLaMA-Factory/blob/main/README_zh.md#%E6%A8%A1%E5%9E%8B" target="_blank" rel="noopener noreffer "> LLaMA-Factory 项目地址</a>中的方法就好，如果你下载到本地，由于不明确路径是什么，我直接填写了绝对路径上去，实测是可以运行的，也可以填写相对路径，相对路径应该是相对于LLaMA-Factory目录内部的路径</td>
+</tr>
+<tr>
+<td>模型路径</td>
+<td>本地文件，填写本地路径；如果直接用 huggingface 上的模型，就填写模型路径，在选择模型名称时会自动填写</td>
+</tr>
+</tbody>
+</table>
+<p>第一行就是这样，在上面的图片中，我采用的是 LLaMA3B-Chinese-Chat 这个模型，保存在本地，使用绝对路径。</p>
+<h2 id="2微调方法和检查点路径">2.微调方法和检查点路径</h2>
+<p>微调方法可选的有三种类，见下面的表格，该表中的内容在命令中反映为<code>--finetuning_type</code></p>
+<table>
+<thead>
+<tr>
+<th>微调方法</th>
+<th>介绍</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>full</td>
+<td>全量微调，把整个预训练模型的每一个层，所有的模型参数都进行调整，来适应我们需要的下游任务， GPU 计算资源占用相当高，是一种比较早期的模型训练方法，后来的一些研究和论文研究了其他微调的策略，只对部分参数进行微调，有一些能在大大减少 GPU 占用的情况下达到相似的效果</td>
+</tr>
+<tr>
+<td>freeze</td>
+<td>冻结方法，将整个预训练模型的大多数层冻结，只调整部分层的参数，一般是后面的层，因为前面的层更倾向于处理输入，后面的层更贴近输出，大模型在前面的层已经很好学到了语言能力，主要是调整其组织语言的方式，由于对调整参数较少， GPU 占用相应地比全量微调低一些</td>
+</tr>
+<tr>
+<td>LoRA</td>
+<td>低秩适应，一种又新又好的方法，<a href="https://arxiv.org/abs/2106.09685" target="_blank" rel="noopener noreffer ">原论文链接</a>，有洋文阅读问题的话，这是一个还行的<a href="https://www.cnblogs.com/xiximayou/p/17283052.html" target="_blank" rel="noopener noreffer ">论文翻译</a>，它基于一个“模型的适应过程中权重的变化具有较低的内在秩”的假设，虽然一般来说层的权重矩阵具有全秩，但是当适应一个特定的任务的时候，这个语言模型的矩阵维度会降低，按我的理解就是矩阵从它的向量空间映射到它的子空间（也就是从原本任务映射到一个子下游任务），其中有一些维度的内容不在子空间中起效果，比如一个描述三维空间的矩阵投影到二维，有一个维度被舍弃了，这个多余的维度就是不在子任务中的内容。</td>
+</tr>
+</tbody>
+</table>
+<p>下面是不同微调方法所需的 GPU 显存，其中 QLoRA 是损失精度，量化后的 LoRA 方法</p>
+<p><figure><a class="lightgallery" href="../images/llama8.png" title="训练要求" data-thumbnail="../images/llama8.png" data-sub-html="<h2>LLAMA-Factory 给出的不同微调方法所需 GPU 显存</h2><p>训练要求</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="../images/llama8.png"
+            data-srcset="../images/llama8.png, ../images/llama8.png 1.5x, ../images/llama8.png 2x"
+            data-sizes="auto"
+            alt="../images/llama8.png" />
+    </a><figcaption class="image-caption">LLAMA-Factory 给出的不同微调方法所需 GPU 显存</figcaption>
+    </figure></p>
+<p>检查点路径一栏给出了检查点保存的位置，在命令中反映为<code>--adapter_name_or_path</code>，每次训练结束之后，训练的“新”内容会存储在这个位置，需要把它和原模型合并，才能输出为一个新的总模型的形式，在你没有合并模型的时候，选择对应的检查点路径可以非常方便地加载“总”模型，而不用你再手动每次都合并后再测试。合并模型在 Export 一栏，选择对应检查点后直接导出就好。</p>
+<h2 id="3train-训练一栏">3.Train 训练一栏</h2>
+<table>
+<thead>
+<tr>
+<th>训练阶段可选项</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Supervised Fine-Tuning（监督微调，SFT）</td>
+<td>使用一个已经训练好的模型，也就是预训练模型作为初始状态，然后使用目标任务的训练集对模型进行微调，避免了从头开始训练模型，一般只修改模型中的某些层。</td>
+</tr>
+<tr>
+<td>Reward Modeling（奖励建模）</td>
+<td>当模型产生一个输出时，人类会对它的输出进行评估，告诉它什么是好的什么是不好的，让大模型来向着好的方向努力，避免产生坏的结果的的训练方法。</td>
+</tr>
+<tr>
+<td>PPO</td>
+<td>是 OpenAI 在 2017 年提出的一种强化学习算法，是基于策略优化的算法，用于训练能够最大化累积奖励的智能体。 PPO 算法通过在每次更新时限制新策略与旧策略之间的差异，从而更稳定地更新策略参数。这种方法有助于避免训练过程中出现的不稳定性和剧烈波动，使得算法更容易收敛并学习到更好的策略。<a href="https://arxiv.org/abs/1707.06347" target="_blank" rel="noopener noreffer ">论文链接</a></td>
+</tr>
+<tr>
+<td>DPO</td>
+<td>一种稳定的、性能和计算成本轻量级的强化学习算法。通过利用奖励函数与最优策略之间的映射关系，证明这个受限的奖励最大化问题可以通过单阶段的策略训练来精确优化，本质上是在人类偏好数据上解决一个分类问题。即一种稳定低成本的 PPO ,<a href="https://arxiv.org/abs/2305.18290" target="_blank" rel="noopener noreffer ">论文链接</a></td>
+</tr>
+<tr>
+<td>KTO</td>
+<td>KTO不需要偏好数据，可以直接利用二元信号标记的数据来训练算法，对于负样本更加敏感。实验表明，KTO算法在一定参数范围内能够超过DPO算法，并且KTO可以处理数据正负样本不平衡的情况。<a href="https://arxiv.org/abs/2402.01306" target="_blank" rel="noopener noreffer ">论文链接</a>还有不错的<a href="https://zhuanlan.zhihu.com/p/696331582" target="_blank" rel="noopener noreffer ">中文讲解</a></td>
+</tr>
+</tbody>
+</table>
+<p>数据路径默认为 data ，就是 LLaMA-Factory 文件夹下（后面以相对路径 LLaMA-Factory 目录下表示，不再赘述）</p>
+<p>数据集可选，一些 demo 保存在 data 文件夹下，可以直接测试。</p>
+<p><strong>注意：</strong> 如果你自己新建数据集，一定要把你的数据集放在 data 目录下，并且在 dataset_info.json中添加，<strong>并且要先看 <a href="https://github.com/hiyouga/LLaMA-Factory/blob/main/data/README_zh.md" target="_blank" rel="noopener noreffer ">README_zh.md</a> 下的内容</strong></p>
+<p>比如我新建了一个叫做 &ldquo;0_600.json&rdquo; 的数据集，描述为stack_demo，那么应该在 dataset_info.json 中是这样：
+<figure><a class="lightgallery" href="../images/llama9.png" title="dataset_info" data-thumbnail="../images/llama9.png" data-sub-html="<h2>dataset_info.json 中</h2><p>dataset_info</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="../images/llama9.png"
+            data-srcset="../images/llama9.png, ../images/llama9.png 1.5x, ../images/llama9.png 2x"
+            data-sizes="auto"
+            alt="../images/llama9.png" />
+    </a><figcaption class="image-caption">dataset_info.json 中</figcaption>
+    </figure>
+在webui中长这样：
+<figure><a class="lightgallery" href="../images/llama10.png" title="webui" data-thumbnail="../images/llama10.png" data-sub-html="<h2>在 webui 中的第二行，可以选择</h2><p>webui</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="../images/llama10.png"
+            data-srcset="../images/llama10.png, ../images/llama10.png 1.5x, ../images/llama10.png 2x"
+            data-sizes="auto"
+            alt="../images/llama10.png" />
+    </a><figcaption class="image-caption">在 webui 中的第二行，可以选择</figcaption>
+    </figure></p>
+<h3 id="31-adamw-优化器">3.1 AdamW 优化器</h3>
+<p>是一种 Adam 优化器的改进形式，一种自动分析 loss 并且调整优化学习率的优化器，分析可以看<a href="https://www.jiqizhixin.com/articles/2018-07-03-14" target="_blank" rel="noopener noreffer ">机器之心的这篇文章</a>。学习的过程是在给定的一个初始点上计算损失函数的梯度，因为梯度的方向就是增加最快的方向，所以我们的点应该向梯度的反方向滑动一个距离（称为步长），然后再在这个点通过一些聪明的方法计算我们接下来要前往的方向，从而找到损失函数值很低的一个点。 AdamW 优化器就是一个非常聪明的方法。</p>
+<p>最大梯度范数是在一些情况下，会出现梯度爆炸等不符合我们预期的情况，为了避免这些事情，我们有根据地限定梯度的范围，超出这个范围的就用范围的边界来表示。</p>
+<p>训练精度上，在浮点数处理方面，计算机一般使用的 float 数据类型（称为 FP32）也就是单精度浮点数，根据 IEEE 标准，阶码是 8 位，尾数是 23 位。而半精度浮点数有两种类型（BF16 和 FP16），BF16 用 8 位表示阶码，7 位表示尾数；FP16 用 5 位表示阶码，10位表示尾数，在训练之前，注意<strong>你的 GPU 是否支持 BF16 数据类型</strong></p>
+<p>学习率调节器一栏内容太多，就不在这里讲了。
+对于 Evaluate&amp;Predict 一栏，有问题的可以看到<a href="https://www.ibm.com/docs/zh/watsonx/saas?topic=lab-model-parameters-prompting" target="_blank" rel="noopener noreffer ">IBM百科中的有关讲解</a></p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2024-07-17</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/" data-title="使用 LLaMA Factory 训练模型指北（二、从 Webui 入手）"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="分享到 Hacker News" data-sharer="hackernews" data-url="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/" data-title="使用 LLaMA Factory 训练模型指北（二、从 Webui 入手）"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/" data-title="使用 LLaMA Factory 训练模型指北（二、从 Webui 入手）"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@7.3.0/icons/line.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="http://croakero.github.io/posts/%E4%BD%BF%E7%94%A8-llama-factory-%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%BA%8C%E4%BB%8E-webui-%E5%85%A5%E6%89%8B/" data-title="使用 LLaMA Factory 训练模型指北（二、从 Webui 入手）"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/%E4%BD%BF%E7%94%A8llama-factory%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B%E6%8C%87%E5%8C%97%E4%B8%80%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85/" class="prev" rel="prev" title="使用LLaMA Factory训练模型指北（一、环境安装）"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>使用LLaMA Factory训练模型指北（一、环境安装）</a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2023 - 2024</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank"></a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.5.0/css/lightgallery-bundle.min.css"><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery@2.5.0/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery@2.5.0/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery@2.5.0/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.5.1/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":100},"comment":{},"lightgallery":true};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>
